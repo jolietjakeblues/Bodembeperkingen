@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Industriële monumenten en bodembeperkingen — een vervolganalyse</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:        #16324F;
+    --ink-soft:   #2C4A68;
+    --paper:      #F6F2E7;
+    --paper-dim:  #EFE9D8;
+    --stamp:      #A3402B;
+    --stamp-soft: #C97A5D;
+    --moss:       #4B5D45;
+    --graphite:   #2B2B28;
+    --line:       #D6CFB8;
+    --line-soft:  #E4DEC9;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans", Roboto, Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{animation:none !important; transition:none !important;} }
+
+  body{ margin:0; background:var(--paper); color:var(--graphite); font-family:var(--sans); font-size:16px; line-height:1.65; }
+
+  .shell{ display:grid; grid-template-columns: 240px 1fr; max-width:1280px; margin:0 auto; }
+  @media (max-width:900px){ .shell{ grid-template-columns: 1fr; } }
+
+  nav.toc{ position:sticky; top:0; align-self:start; height:100vh; padding:2.5rem 1.5rem; overflow-y:auto; border-right:1px solid var(--line); }
+  @media (max-width:900px){ nav.toc{ position:static; height:auto; border-right:none; border-bottom:1px solid var(--line); padding:1.25rem 1.5rem; } }
+  nav.toc .brand{ font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--moss); margin-bottom:.35rem; display:block; }
+  nav.toc .brand.sub{ color:var(--ink-soft); margin-bottom:1.75rem; }
+  nav.toc ul{ list-style:none; margin:0; padding:0; }
+  nav.toc li{ margin-bottom:.15rem; }
+  nav.toc a{ display:block; padding:.4rem .5rem; margin-left:-.5rem; border-radius:2px; color:var(--ink-soft); text-decoration:none; font-size:.86rem; border-left:2px solid transparent; }
+  nav.toc a:hover, nav.toc a.active{ color:var(--stamp); border-left-color:var(--stamp); background:var(--paper-dim); }
+
+  main{ padding:0 clamp(1.5rem, 4vw, 5rem); }
+  section{ padding:4rem 0; border-bottom:1px solid var(--line-soft); max-width:760px; }
+  section.wide{ max-width:100%; }
+  section:last-of-type{ border-bottom:none; }
+
+  .eyebrow{ font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--moss); margin:0 0 .75rem 0; }
+  h1,h2,h3{ font-family:var(--serif); font-weight:600; color:var(--ink); margin:0 0 1rem 0; }
+  h2{ font-size:1.7rem; } h3{ font-size:1.15rem; margin-top:2rem; color:var(--ink-soft); }
+  h4{ font-family:var(--mono); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--moss); margin:1.5rem 0 .6rem; }
+  p{ margin:0 0 1.1rem 0; } strong{ color:var(--ink); }
+  .lede{ font-size:1.15rem; color:var(--ink-soft); }
+  code, .mono{ font-family:var(--mono); }
+  .code-chip{ font-family:var(--mono); font-size:.82rem; background:var(--paper-dim); border:1px solid var(--line); border-radius:3px; padding:.05rem .4rem; }
+  ul.list, ol.list{ padding-left:1.3rem; } ul.list li, ol.list li{ margin-bottom:.6rem; }
+  blockquote.rq{ font-family:var(--serif); font-style:italic; font-size:1.2rem; color:var(--ink); border-left:3px solid var(--stamp); margin:1.5rem 0; padding:.3rem 0 .3rem 1.4rem; }
+
+  /* callout boxes */
+  .box{ border:1px solid var(--line); border-radius:6px; padding:1.2rem 1.4rem; margin:1.5rem 0; background:#fff; }
+  .box.warn{ border-left:4px solid var(--stamp); }
+  .box.info{ border-left:4px solid var(--moss); }
+  .box h4{ margin-top:0; }
+
+  /* ---------- hero ---------- */
+  .hero{ padding-top:5rem; max-width:100%; display:grid; grid-template-columns: 1.25fr 1fr; gap:3rem; align-items:center; }
+  @media (max-width:900px){ .hero{ grid-template-columns:1fr; padding-top:3rem; } }
+  .hero h1{ font-size:clamp(1.9rem, 3.6vw, 2.7rem); line-height:1.14; max-width:19ch; }
+  .hero .sub{ font-size:1.05rem; color:var(--ink-soft); max-width:46ch; margin-top:1rem; }
+  .hero .meta{ margin-top:2rem; font-family:var(--mono); font-size:.78rem; color:var(--moss); }
+  .hero .meta div{ margin-bottom:.25rem; }
+
+  /* signature: industrial skyline made of comparison bars */
+  .skyline{ position:relative; height:300px; display:flex; align-items:flex-end; justify-content:center; gap:1.6rem; padding-bottom:2.2rem; border-bottom:2px solid var(--ink); }
+  .skybar{ position:relative; width:46px; border-radius:2px 2px 0 0; animation:rise 1s cubic-bezier(.2,.8,.2,1) backwards; }
+  .skybar .cap{ position:absolute; top:-1.6rem; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:.85rem; font-weight:700; white-space:nowrap; }
+  .skybar .lbl{ position:absolute; bottom:-2.1rem; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:.6rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); white-space:nowrap; text-align:center; width:90px; }
+  .skybar.a1{ background:var(--line); height:36%; animation-delay:.05s; }
+  .skybar.a2{ background:var(--stamp); height:91%; animation-delay:.2s; }
+  .skybar.b1{ background:var(--line); height:110%; animation-delay:.35s; }
+  .skybar.b2{ background:var(--stamp-soft); height:161%; animation-delay:.5s; }
+  .skyline{ transform:scale(.62); transform-origin:bottom center; }
+  @keyframes rise{ from{ transform:scaleY(0); transform-origin:bottom; opacity:0; } }
+
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  .statrow{ display:flex; gap:2.2rem; flex-wrap:wrap; margin:2rem 0; }
+  .stat{ min-width:130px; }
+  .stat .v{ font-family:var(--serif); font-size:2rem; color:var(--stamp); font-weight:600; }
+  .stat .k{ font-family:var(--mono); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
+
+  .steps{ counter-reset:step; padding-left:0; list-style:none; }
+  .steps li{ counter-increment:step; position:relative; padding-left:3rem; margin-bottom:1.4rem; }
+  .steps li::before{ content:counter(step); position:absolute; left:0; top:-.1rem; font-family:var(--mono); font-size:.85rem; width:2rem; height:2rem; border:1px solid var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink); }
+
+  .chart-grid{ display:grid; grid-template-columns:1fr; gap:2.5rem; max-width:900px; }
+  .chart-grid.two{ grid-template-columns:1fr 1fr; }
+  @media (max-width:800px){ .chart-grid.two{ grid-template-columns:1fr; } }
+  .chart-card{ background:#fff; border:1px solid var(--line); border-radius:6px; padding:1.5rem 1.5rem 1rem; }
+  .chart-card h3{ margin-top:0; font-size:1.02rem; }
+  .chart-card .cap{ font-size:.82rem; color:var(--ink-soft); margin-top:.5rem; }
+  .chart-wrap{ position:relative; height:300px; }
+  .chart-wrap.donut{ height:260px; max-width:300px; margin:0 auto; }
+
+  table.data{ width:100%; border-collapse:collapse; font-size:.86rem; background:#fff; }
+  table.data th, table.data td{ padding:.5rem .65rem; border-bottom:1px solid var(--line-soft); text-align:left; }
+  table.data th{ font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--moss); border-bottom:2px solid var(--line); }
+  table.data td.num{ font-family:var(--mono); text-align:right; }
+  table.data td.code{ font-family:var(--mono); font-weight:600; color:var(--ink); }
+  .table-scroll{ border:1px solid var(--line); border-radius:6px; overflow:hidden; margin-bottom:1rem; }
+  .cat-head td{ background:var(--paper-dim); font-weight:700; color:var(--ink); font-family:var(--mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; }
+
+  .sparql{ position:relative; background:var(--ink); color:#EAE3CF; border-radius:6px; padding:1.4rem 1.5rem; font-family:var(--mono); font-size:.8rem; overflow-x:auto; white-space:pre; margin-bottom:1.5rem; }
+  .copy-btn{ position:absolute; top:.8rem; right:.8rem; font-family:var(--mono); font-size:.66rem; background:transparent; color:#EAE3CF; border:1px solid #4a678a; border-radius:3px; padding:.3rem .6rem; cursor:pointer; }
+  .copy-btn:hover{ background:#22456b; }
+
+  .taglist{ display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; }
+  .tag{ font-family:var(--mono); font-size:.76rem; padding:.25rem .6rem; border-radius:3px; }
+  .tag.smal{ background:#e8dcd6; color:var(--stamp); }
+  .tag.breed{ background:#eee6d3; color:#8a6a1f; }
+  .tag.miss{ background:#e6e2d8; color:var(--ink-soft); text-decoration:line-through; text-decoration-color:#b3ab94; }
+
+  footer{ padding:3rem clamp(1.5rem,4vw,5rem) 4rem; font-size:.8rem; color:var(--ink-soft); max-width:760px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="toc">
+    <span class="brand">RCE &middot; CHO-KENNIS</span>
+    <span class="brand sub">Vervolganalyse</span>
+    <ul id="tocList">
+      <li><a href="#samenvatting">Samenvatting</a></li>
+      <li><a href="#aanleiding">Aanleiding</a></li>
+      <li><a href="#methode">Methode &amp; classificatie</a></li>
+      <li><a href="#resultaten">Resultaten</a></li>
+      <li><a href="#duiding">Duiding</a></li>
+      <li><a href="#kanttekeningen">Kanttekeningen</a></li>
+      <li><a href="#vervolg">Vervolgstappen</a></li>
+      <li><a href="#bijlage">Bijlage &mdash; queries &amp; data</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Vervolganalyse &middot; RCE CHO &times; Kadaster Kennisgraaf</span>
+        <h1>Industriële monumenten zijn 2,5&times; oververtegenwoordigd onder bodembeperkingen</h1>
+        <p class="sub">Vervolg op de stapelingsanalyse van 6 juli: liggen bodemgerelateerde beperkingen inderdaad vaker op rijksmonumenten met een industrieel verleden?</p>
+        <div class="meta">
+          <div>Bron: RCE CHO SPARQL-endpoint (linkeddata.cultureelerfgoed.nl)</div>
+          <div>Rijksdienst voor het Cultureel Erfgoed &middot; juli 2026</div>
+        </div>
+      </div>
+      <div class="skyline" aria-hidden="true">
+        <div class="skybar a1"><span class="lbl">Smal &middot; baseline</span></div>
+        <div class="skybar a2"><span class="cap">2,5&times;</span><span class="lbl">Smal &middot; bodem-subset</span></div>
+        <div class="skybar b1"><span class="lbl">Breed &middot; baseline</span></div>
+        <div class="skybar b2"><span class="cap">1,5&times;</span><span class="lbl">Breed &middot; bodem-subset</span></div>
+      </div>
+    </section>
+
+    <section id="samenvatting" class="reveal">
+      <span class="eyebrow">01</span>
+      <h2>Samenvatting</h2>
+      <p class="lede">Van de 2.436 rijksmonumenten met een bodemgerelateerde beperking heeft 9,1% een kern-industriële functie — tegen 3,6% over alle 63.097 actieve rijksmonumenten met een geregistreerde functie. Dat is een factor 2,5 hoger.</p>
+      <div class="statrow">
+        <div class="stat"><div class="v">2.436</div><div class="k">monumenten met bodembeperking</div></div>
+        <div class="stat"><div class="v">9,1%</div><div class="k">daarvan industrieel (smal)</div></div>
+        <div class="stat"><div class="v">3,6%</div><div class="k">industrieel in totale populatie</div></div>
+        <div class="stat"><div class="v">2,5&times;</div><div class="k">oververtegenwoordiging</div></div>
+      </div>
+      <p>Bij een bredere definitie van "industrieel" (inclusief pakhuizen, opslag en werk-woonhuizen) is het beeld hetzelfde, maar minder uitgesproken: 16,1% tegen 11,0% &mdash; een factor 1,5. Beide verschillen zijn, gegeven de omvang van de datasets, statistisch zeer robuust (z &gt; 8 in beide gevallen) &mdash; dit is geen toevalstreffer.</p>
+      <p>Dit rapport laat expliciet zien <em>hoe</em> "industrieel" is gedefinieerd: welke functienaam-labels wel zijn meegeteld, welke bewust niet, en waar de grens tussen "smal" en "breed" arbitrair is. Dat is een bewuste keuze &mdash; de conclusie staat of valt met die definitie, en dat moet navolgbaar zijn voor wie ermee verder wil.</p>
+    </section>
+
+    <section id="aanleiding" class="reveal">
+      <span class="eyebrow">02</span>
+      <h2>Aanleiding</h2>
+      <p>Op 6 juli is in kaart gebracht dat 18,5% van de rijksmonumentpercelen met een Erfgoedwet-beperking (EWE) ook nog een andere publiekrechtelijke beperking draagt. Het grootste cluster daarbinnen bestaat uit bodemgerelateerde beperkingen (Wet bodembescherming / Omgevingswet-nazorg): 2.436 monumenten.</p>
+      <p>Die uitkomst riep een voor de hand liggende vervolgvraag op: komt dat cluster vooral voor bij monumenten met een industrieel gebruiksverleden &mdash; fabrieken, gemalen, werven &mdash; waar je bodemverontreiniging het eerst zou verwachten? Deze analyse toetst dat.</p>
+      <blockquote class="rq">"Zijn bodem-beperkingen inderdaad oververtegenwoordigd bij industriële monumenttypen?"</blockquote>
+    </section>
+
+    <section id="methode" class="wide reveal">
+      <span class="eyebrow">03</span>
+      <h2>Methode &amp; classificatie</h2>
+
+      <div style="max-width:760px">
+        <h3>Databronnen</h3>
+        <p>De bodem-subset (2.436 monumenten) komt uit de stapelingsanalyse van 6 juli, gebaseerd op de Kadaster Kennisgraaf. Functienaam en juridische status komen uit het RCE CHO SPARQL-endpoint, via <span class="code-chip">ceo:heeftOorspronkelijkeFunctie</span> / <span class="code-chip">ceo:heeftFunctieNaam</span> en <span class="code-chip">ceo:heeftJuridischeStatus</span> (gefilterd op "rijksmonument", zodat afgevoerde monumenten buiten beschouwing blijven).</p>
+
+        <h3>De bodem-subset: acht grondslagcodes</h3>
+        <p>Bodemgerelateerde beperkingen op basis van de Wet bodembescherming en de vergelijkbare Omgevingswet-nazorgbepalingen:</p>
+        <div class="taglist">
+          <span class="tag smal">KW</span><span class="tag smal">WBI</span><span class="tag smal">WBD</span>
+          <span class="tag smal">WBC</span><span class="tag smal">WBA</span><span class="tag smal">WBE</span>
+          <span class="tag smal">WBB</span><span class="tag smal">OLD</span>
+        </div>
+
+        <h3>De basislijn</h3>
+        <p>Ter vergelijking: alle 63.097 actieve rijksmonumenten waarvoor een functienaam geregistreerd staat. Dat is dus <em>niet</em> gecorrigeerd voor de 2.436 die ook in de bodem-subset zitten &mdash; bij dit soort verschilgroottes verandert dat de conclusie niet, zie de kanttekeningen.</p>
+      </div>
+
+      <h3>De industrieel/niet-industrieel classificatie &mdash; expliciet</h3>
+      <p style="max-width:760px">Dit is een eigen classificatie, geen officiële RCE-typering. Ze is gemaakt met twee regex-trefwoordenlijsten op de functienaam, gedraaid tegen zowel de bodem-subset als de basislijn:</p>
+
+      <h4>"Smal" — kern-industrieel</h4>
+      <div class="sparql" style="max-width:760px"><button class="copy-btn" data-target="smal-regex">kopieer</button><span id="smal-regex">fabriek|nijverheid|industrie|gemaal|molen|spoor|mijn|scheepv|werf|
+elektriciteitscentrale|gasfabriek|smederij|brouwerij|ketelhuis|
+machinegebouw|maalderij|hoogoven|pompstation|transformator|leerlooierij</span></div>
+
+      <h4>"Breed" — smal + opslag/pakhuis-achtige functies</h4>
+      <div class="sparql" style="max-width:760px"><button class="copy-btn" data-target="breed-regex">kopieer</button><span id="breed-regex">(smal) + pakhuis|opslag|magazijn|werk-woonhuis</span></div>
+
+      <div class="box warn" style="max-width:760px">
+        <h4>Wat hier bewust buiten viel</h4>
+        <p>Een aantal functienaam-labels die je inhoudelijk als (licht-)industrieel zou kunnen zien, matchen geen van beide trefwoordenlijsten en zijn dus <strong>niet</strong> meegeteld als "industrieel" &mdash; ook niet in de brede variant:</p>
+        <div class="taglist">
+          <span class="tag miss">Branderij (13)</span><span class="tag miss">Loods (7)</span>
+          <span class="tag miss">Drukkerij (5)</span><span class="tag miss">Silo (3)</span>
+          <span class="tag miss">Pompgebouw (3)</span><span class="tag miss">Remise (3)</span>
+          <span class="tag miss">Zoutziederij (3)</span><span class="tag miss">Zuiveringshuis (2)</span>
+          <span class="tag miss">Locomotievenremise (2)</span><span class="tag miss">Perrongebouw (2)</span>
+          <span class="tag miss">IJzergieterij (2)</span><span class="tag miss">Koperslagerij (1)</span>
+          <span class="tag miss">Olieslagerij (1)</span><span class="tag miss">Pellerij (1)</span>
+          <span class="tag miss">Schoenmakerij (1)</span><span class="tag miss">Goederenloods (1)</span>
+          <span class="tag miss">Wasserij (1)</span><span class="tag miss">Vernisstokerij (1)</span>
+        </div>
+        <p style="margin-bottom:0">Zouden deze wél meetellen, dan wordt de oververtegenwoordiging in de bodem-subset eerder groter dan kleiner &mdash; branderijen, ijzergieterijen en zoutziederijen zijn typisch bodembelastende bedrijvigheid. Dit rapport telt ze bewust niet mee, om de "smal"-definitie strikt bij expliciete fabrieks-/industrie-taal te houden.</p>
+      </div>
+    </section>
+
+    <section id="resultaten" class="wide reveal">
+      <span class="eyebrow">04</span>
+      <h2>Resultaten</h2>
+
+      <div class="chart-grid two">
+        <div class="chart-card">
+          <h3>Aandeel industrieel: bodem-subset vs. basislijn</h3>
+          <div class="chart-wrap"><canvas id="chartCompare"></canvas></div>
+          <p class="cap">Beide definities laten dezelfde richting zien: industrieel komt vaker voor waar een bodembeperking ligt.</p>
+        </div>
+        <div class="chart-card">
+          <h3>Statistische robuustheid (z-score)</h3>
+          <div class="chart-wrap"><canvas id="chartZ"></canvas></div>
+          <p class="cap">Een z-score boven ~2 geldt doorgaans als significant. Hier ruim boven 8 op beide definities.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:3rem">Samenstelling van de bodem-subset</h3>
+      <div class="chart-grid two">
+        <div class="chart-card">
+          <h3>Smal / breed / overig</h3>
+          <div class="chart-wrap donut"><canvas id="chartDonut"></canvas></div>
+          <p class="cap">Van de 2.436 monumenten met bodembeperking valt 9,1% onder de smalle industrieel-definitie.</p>
+        </div>
+        <div class="chart-card">
+          <h3>Top-10 functies in de bodem-subset</h3>
+          <div class="chart-wrap"><canvas id="chartTopBodem"></canvas></div>
+          <p class="cap">Samengevoegde telling over drie query-batches (n=2.436); woonhuis-achtige functies blijven het grootste blok.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:3rem">Welke functienaam-labels zijn precies meegeteld?</h3>
+      <p>Illustratieve, samengevoegde telling van de labels die de "smal"-trefwoordenlijst matchten binnen de bodem-subset (som benadert het autoritatieve totaal van 222; enkele losse labels met 1 voorkomen ontbreken door afkapping van de brontabel op 200 rijen per batch).</p>
+      <div class="table-scroll">
+        <table class="data" id="smalTable">
+          <thead><tr><th>Functienaam-label</th><th style="text-align:right">Aantal</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="duiding" class="reveal">
+      <span class="eyebrow">05</span>
+      <h2>Duiding</h2>
+      <h3>Het patroon is robuust, niet marginaal</h3>
+      <p>Een factor 2,5 op de smalle definitie, met een z-score van bijna 14, is geen ruis. Zelfs bij de conservatievere brede definitie (die woonwerk-huizen en pakhuizen meetelt, wat het gemiddelde optrekt en het contrast dus juist verkleint) blijft de oververtegenwoordiging overeind: factor 1,5, z &asymp; 8.</p>
+      <h3>Fabrieken zijn de grootste aanjager</h3>
+      <p>Binnen de "smal"-groep is de fabriek-familie veruit het grootste blok: machinefabriek, fabrieksgebouw, gasfabriek, en een lange staart specifieke fabriekstypen (suiker-, cacao-, metaal-, verf-, kunstzijde-, brood-, zuivel-, kaas-, leerfabriek). Dat is precies het beeld dat je verwacht bij bodemverontreiniging: voormalige productielocaties met een chemisch of zwaar-industrieel verleden.</p>
+      <h3>Mijnwerkerswoningen: een interessante nuance</h3>
+      <p>Met 13 voorkomens valt "Mijnwerkerswoningen" op &mdash; woningen zelf zijn niet vervuilend, maar liggen vermoedelijk op of naast voormalige mijnbouwlocaties (Limburg), waar de bodembeperking aan de <em>locatie</em> hangt, niet aan het gebouw. Dat is een aanwijzing dat een deel van het effect via nabijheid loopt, niet uitsluitend via het gebruik van het monument zelf &mdash; een nuance die verder onderzoek verdient (zie vervolgstappen).</p>
+    </section>
+
+    <section id="kanttekeningen" class="reveal">
+      <span class="eyebrow">06</span>
+      <h2>Kanttekeningen</h2>
+      <ul class="list">
+        <li><strong>Eigen classificatie, geen RCE-standaard.</strong> De smal/breed-indeling is een trefwoorden-classificatie die ik heb opgesteld voor deze analyse; een collega die de functietypering beter kent, zou 'm moeten toetsen.</li>
+        <li><strong>Basislijn niet gecorrigeerd voor overlap.</strong> De 63.097 in de basislijn bevatten ook de 2.436 uit de bodem-subset. Bij deze effectgrootte verandert dat de conclusie niet wezenlijk, maar een striktere vergelijking (basislijn min bodem-subset) is eenvoudig na te rekenen.</li>
+        <li><strong>Regex-matching op vrije tekst.</strong> Sommige plausibel-industriële labels (Branderij, Loods, Drukkerij, diverse "-erijen") zijn bewust niet meegeteld &mdash; zie het kader in de methode. Dit werkt conservatief: het echte effect is eerder groter dan hier gerapporteerd, niet kleiner.</li>
+        <li><strong>Eén functie per monument is een vereenvoudiging.</strong> Sommige monumenten hebben meerdere functienaam-labels (bijvoorbeeld een woonhuis met bijgebouwen); dat kan een monument in meerdere categorieën tegelijk laten meetellen.</li>
+        <li><strong>Correlatie, geen causaliteit.</strong> Deze analyse toont samenhang tussen functie en bodembeperking, niet dat het monumentgebruik zelf de vervuiling veroorzaakt (zie de mijnwerkerswoningen-nuance hierboven).</li>
+      </ul>
+    </section>
+
+    <section id="vervolg" class="reveal">
+      <span class="eyebrow">07</span>
+      <h2>Mogelijke vervolgstappen</h2>
+      <ul class="list">
+        <li>Herhaal de classificatie met de "gemiste" labels (Branderij, Loods, Drukkerij, e.d.) meegeteld, om te zien hoeveel de factor daarmee oploopt.</li>
+        <li>Split de basislijn: vergelijk de bodem-subset tegen "basislijn min bodem-subset" voor een zuiverdere twee-groepen-vergelijking.</li>
+        <li>Onderzoek de "Mijnwerkerswoningen"-nuance verder: hangt de bodembeperking aan het monument zelf, of aan de locatie/omgeving? Dat vraagt een geografische in plaats van functionele koppeling.</li>
+        <li>Breng de geografische spreiding van de bodem-subset in kaart (Amsterdam, Arnhem, Alkmaar, Haarlem, Zaanstad staan al bovenaan) en leg die naast historische industriekaarten.</li>
+      </ul>
+    </section>
+
+    <section id="bijlage" class="wide reveal">
+      <span class="eyebrow">08</span>
+      <h2>Bijlage &mdash; queries &amp; brondata</h2>
+
+      <h3 style="max-width:760px">Kernquery: aandeel industrieel (smal/breed) binnen een groep</h3>
+      <div class="sparql"><button class="copy-btn" data-target="q1">kopieer</button><span id="q1">PREFIX ceo: &lt;https://linkeddata.cultureelerfgoed.nl/def/ceo#&gt;
+PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+SELECT
+  (COUNT(DISTINCT ?m) AS ?totaal)
+  (COUNT(DISTINCT ?msmal) AS ?smal)
+  (COUNT(DISTINCT ?mbreed) AS ?breed)
+WHERE {
+  # VALUES ?nr { ... } -- weggelaten voor de basislijn (alle monumenten)
+  ?m ceo:rijksmonumentnummer ?nr .
+  ?m ceo:heeftJuridischeStatus ?status1 . ?status1 skos:prefLabel "rijksmonument" .
+  ?m ceo:heeftOorspronkelijkeFunctie ?f . ?f ceo:heeftFunctieNaam ?fn . ?fn skos:prefLabel ?functienaam .
+  BIND(IF(REGEX(STR(?functienaam), "fabriek|nijverheid|industrie|gemaal|molen|spoor|mijn|scheepv|werf|elektriciteitscentrale|gasfabriek|smederij|brouwerij|ketelhuis|machinegebouw|maalderij|hoogoven|pompstation|transformator|leerlooierij", "i"), ?m, ?UNBOUND1) AS ?msmal)
+  BIND(IF(REGEX(STR(?functienaam), "fabriek|nijverheid|industrie|gemaal|molen|spoor|mijn|scheepv|werf|elektriciteitscentrale|gasfabriek|smederij|brouwerij|ketelhuis|machinegebouw|maalderij|hoogoven|pompstation|transformator|leerlooierij|pakhuis|opslag|magazijn|werk-woonhuis", "i"), ?m, ?UNBOUND2) AS ?mbreed)
+}</span></div>
+
+      <h3 style="max-width:760px">Kerncijfers</h3>
+      <div class="table-scroll" style="max-width:760px">
+        <table class="data">
+          <thead><tr><th>Groep</th><th style="text-align:right">Totaal</th><th style="text-align:right">Smal</th><th style="text-align:right">Smal %</th><th style="text-align:right">Breed</th><th style="text-align:right">Breed %</th></tr></thead>
+          <tbody>
+            <tr><td>Bodem-subset</td><td class="num">2.436</td><td class="num">222</td><td class="num">9,1%</td><td class="num">393</td><td class="num">16,1%</td></tr>
+            <tr><td>Alle rijksmonumenten</td><td class="num">63.097</td><td class="num">2.279</td><td class="num">3,6%</td><td class="num">6.906</td><td class="num">11,0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="max-width:760px">Statistische toets (twee-proporties z-toets, gepoolde variantie): z = 13,9 (smal), z = 8,0 (breed). Beide ruim boven de gangbare drempel van 1,96 (&alpha;=0,05).</p>
+
+      <p style="max-width:760px">Gerelateerd document: <em>Stapeling van publiekrechtelijke beperkingen op rijksmonumentpercelen</em> (6 juli 2026) &mdash; het basisrapport waaruit de bodem-subset van 2.436 monumenten voortkomt.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Rijksdienst voor het Cultureel Erfgoed &middot; Vervolganalyse op de stapelingsanalyse van 6 juli 2026 &middot; bronnen: RCE CHO SPARQL-endpoint en Kadaster Kennisgraaf.
+</footer>
+
+<script>
+const PALETTE = { ink:"#16324F", inkSoft:"#2C4A68", stamp:"#A3402B", stampSoft:"#C97A5D", moss:"#4B5D45", line:"#D6CFB8" };
+
+const SMAL_MATCHES = {
+  "Machinefabriek": 22, "Fabrieksgebouw": 16, "Industrie (generiek)": 23, "Nijverheid (generiek)": 12,
+  "Molen": 22, "Mijnwerkerswoningen": 13, "Waterweg, werf en haven": 11, "Ketelhuis": 10,
+  "Fabrieksschoorsteen": 7, "Werfgebouw": 7, "Elektriciteitscentrale": 6, "Maalderij": 5,
+  "Fabriekswoning": 4, "Gasfabriek": 4, "Bierbrouwerij": 4, "Transformatorgebouw": 4,
+  "Fabriekshal": 3, "Spoorbrug": 3, "Gemaal (alle varianten)": 5, "Scheepswerf": 2,
+  "Smederij": 2, "Leerlooierij": 2, "Machinegebouw": 2, "Meelfabriek": 2, "Zuivelfabriek": 2,
+  "Aardewerkfabriek": 2, "Cacaofabriek": 2, "Spoorbaan": 2, "Kaasfabriek": 1, "Leerfabriek": 1,
+  "Suikerfabriek": 1, "Tapijtfabriek": 1, "Metaalfabriek": 1, "Verffabriek": 1,
+  "Kunstzijdefabriek": 1, "Broodfabriek": 1, "Suikerwerkfabriek": 1,
+  "Bedrijfs-,fabriekswoning": 1, "Industrie- en poldermolen": 1, "Korenmolen": 1,
+  "Spoorwegstation": 1, "Scheepvaartgebouw": 1,
+};
+
+const BODEM_TOP = {
+  "Woonhuis(K)": 428, "Woonhuis": 387, "Werk-woonhuis": 96, "Bijgebouwen": 67,
+  "Legeringsgebouw": 55, "Kerk": 48, "Boerderij (alle varianten)": 80,
+  "Fort, vesting en -onderdelen": 34, "Omwalling": 30, "Pakhuis": 28,
+};
+
+function renderCharts(){
+  if (typeof Chart === 'undefined'){
+    document.querySelectorAll('.chart-wrap').forEach(w=>{
+      w.innerHTML = '<p style="font-size:.8rem;color:var(--ink-soft);padding:1rem 0;">Grafiekbibliotheek kon niet laden (geen netwerktoegang). Cijfers staan in de tabellen.</p>';
+    });
+    return;
+  }
+
+  Chart.defaults.font.family = "IBM Plex Mono, SF Mono, Consolas, monospace";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = "#2B2B28";
+
+  new Chart(document.getElementById('chartCompare'), {
+    type: 'bar',
+    data: {
+      labels: ['Smal (kern-industrieel)', 'Breed (incl. pakhuis/opslag)'],
+      datasets: [
+        { label: 'Bodem-subset (n=2.436)', data: [9.1, 16.1], backgroundColor: PALETTE.stamp, borderRadius:2 },
+        { label: 'Alle rijksmonumenten (n=63.097)', data: [3.6, 11.0], backgroundColor: PALETTE.line, borderRadius:2 },
+      ]
+    },
+    options: {
+      plugins: { legend: { position:'bottom', labels:{ boxWidth:12, padding:12 } } },
+      scales: { y: { title:{display:true, text:'% van de groep'}, grid:{ color:PALETTE.line } }, x: { grid:{ display:false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chartZ'), {
+    type: 'bar',
+    data: {
+      labels: ['Smal', 'Breed'],
+      datasets: [{ data: [13.9, 8.0], backgroundColor: [PALETTE.stamp, PALETTE.stampSoft], borderRadius:2 }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend:{ display:false } },
+      scales: { x: { title:{display:true, text:'z-score'}, grid:{ color:PALETTE.line } }, y: { grid:{ display:false } } }
+    }
+  });
+
+  new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Smal industrieel', 'Breed extra (pakhuis/opslag/werk-woonhuis)', 'Overig'],
+      datasets: [{ data: [222, 393-222, 2436-393], backgroundColor: [PALETTE.stamp, PALETTE.stampSoft, PALETTE.line], borderColor:'#fff', borderWidth:2 }]
+    },
+    options: { plugins: { legend: { position:'bottom', labels:{ boxWidth:12, padding:10, font:{size:10} } } }, cutout:'60%' }
+  });
+
+  const topSorted = Object.entries(BODEM_TOP).sort((a,b)=>a[1]-b[1]);
+  new Chart(document.getElementById('chartTopBodem'), {
+    type: 'bar',
+    data: {
+      labels: topSorted.map(x=>x[0]),
+      datasets: [{ data: topSorted.map(x=>x[1]), backgroundColor: PALETTE.ink, borderRadius:2 }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend:{ display:false } },
+      scales: { x: { grid:{ color:PALETTE.line } }, y: { grid:{ display:false } } }
+    }
+  });
+}
+try { renderCharts(); } catch(e){ console.error('Chart rendering failed:', e); }
+
+/* smal table */
+const tbody = document.querySelector('#smalTable tbody');
+Object.entries(SMAL_MATCHES).sort((a,b)=>b[1]-a[1]).forEach(([label,count])=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${label}</td><td class="num">${count}</td>`;
+  tbody.appendChild(tr);
+});
+
+/* copy buttons */
+document.querySelectorAll('.copy-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const targetId = btn.dataset.target;
+    const text = targetId ? document.getElementById(targetId).innerText : btn.parentElement.innerText.replace(/^kopieer\s*/,'');
+    navigator.clipboard.writeText(text).then(()=>{
+      const old = btn.textContent; btn.textContent = 'gekopieerd';
+      setTimeout(()=> btn.textContent = old, 1500);
+    });
+  });
+});
+
+/* scroll reveal + toc active state */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); }); }, { threshold: 0.12 });
+revealEls.forEach(el=> io.observe(el));
+
+const sections = document.querySelectorAll('main section[id]');
+const links = document.querySelectorAll('nav.toc a');
+const navIo = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    const link = document.querySelector(`nav.toc a[href="#${e.target.id}"]`);
+    if(!link) return;
+    if(e.isIntersecting) links.forEach(l=>l.classList.remove('active')), link.classList.add('active');
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+sections.forEach(s=> navIo.observe(s));
+</script>
+</body>
+</html>
